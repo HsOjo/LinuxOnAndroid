@@ -2,6 +2,8 @@
 cd "$(dirname "$0")" || exit
 . "./env.sh"
 
+hostname "$(getprop ro.product.device)"
+
 mount "/proc" "$ROOT/proc"
 mount "/sys" "$ROOT/sys"
 mount "/dev" "$ROOT/dev"
