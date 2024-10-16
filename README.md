@@ -10,4 +10,5 @@
 * Execute "install.sh".
 * Extract a linux rootfs to "/data/.linux". 
   * lxc image is recommended.
+* Write your init script in "/data/.linux/init.sh"
 * Reboot your device.
