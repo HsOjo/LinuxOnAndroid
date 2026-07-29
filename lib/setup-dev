@@ -1,0 +1,29 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+DEVSRC=${DEVSRC:-/.oldroot/dev}
+umask 022
+mount -t tmpfs -o mode=0755 tmpfs /dev || true
+mkdir -p /dev/pts /dev/net
+rm -f /dev/null
+mknod -m 666 /dev/null c 1 3
+mknod -m 666 /dev/zero c 1 5 2>/dev/null || true
+mknod -m 666 /dev/full c 1 7 2>/dev/null || true
+mknod -m 644 /dev/random c 1 8 2>/dev/null || true
+mknod -m 644 /dev/urandom c 1 9 2>/dev/null || true
+mknod -m 666 /dev/tty c 5 0 2>/dev/null || true
+mknod -m 600 /dev/console c 5 1 2>/dev/null || true
+mount -t devpts -o newinstance,ptmxmode=666,mode=620,gid=5 devpts /dev/pts 2>/dev/null || true
+ln -sf pts/ptmx /dev/ptmx 2>/dev/null || true
+bind_node() {
+  src="$DEVSRC${1#/dev}"
+  dst="$1"
+  [ -e "$src" ] || return 0
+  mkdir -p "${dst%/*}" 2>/dev/null || true
+  rm -f "$dst" 2>/dev/null || true
+  : > "$dst" 2>/dev/null || true
+  mount --bind "$src" "$dst" 2>/dev/null || true
+}
+for n in /dev/tun /dev/net/tun /dev/fuse; do
+  bind_node "$n"
+done
+exit 0

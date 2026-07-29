@@ -1,0 +1,15 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+mount -t proc -o hidepid=2,gid=3009 proc /proc 2>/dev/null || true
+mount -t sysfs -o ro sysfs /sys 2>/dev/null || true
+DEVSRC=/.hostdev /sbin/setup-dev
+umount -l /.hostdev 2>/dev/null || true
+rmdir /.hostdev 2>/dev/null || true
+mount -t tmpfs -o ro,mode=0555,nodev,nosuid,noexec tmpfs /.oldroot 2>/dev/null || true
+if [ -f /etc/alpine-release ]; then
+  [ -x /sbin/guest-init-alpine ] && /sbin/guest-init-alpine 2>/dev/null || true
+elif [ -f /etc/debian_version ]; then
+  [ -x /sbin/guest-init-debian ] && /sbin/guest-init-debian 2>/dev/null || true
+fi
+echo 800 > /proc/self/oom_score_adj 2>/dev/null || true
+exec /sbin/container-init

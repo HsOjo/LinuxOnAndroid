@@ -1,0 +1,16 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+umask 022
+mkdir -p /run /var/log
+[ -x /etc/rc.local ] && /etc/rc.local >>/var/log/rc.local.log 2>&1 &
+cleanup() {
+  for p in $(jobs -p); do kill "$p" 2>/dev/null; done
+}
+trap 'cleanup; exit 0' TERM INT
+while :; do
+  [ -e /run/.stop ] && break
+  wait
+  sleep 1
+done
+cleanup
+exit 0

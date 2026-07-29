@@ -1,0 +1,25 @@
+#!/bin/sh
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+umask 022
+[ -f /etc/group ] || exit 0
+ensure_group() {
+  gid=$1
+  name=$2
+  grep -q "^$name:" /etc/group 2>/dev/null || groupadd -g "$gid" "$name" 2>/dev/null || true
+  grep -q "^$name:" /etc/group 2>/dev/null || echo "$name:x:$gid:root" >> /etc/group
+  line=$(grep "^$name:" /etc/group 2>/dev/null || true)
+  [ -n "$line" ] || return 0
+  members=${line##*:}
+  case ",$members," in *,root,*) return 0;; esac
+  base=${line%:*}
+  if [ -n "$members" ]; then
+    line="$base:$members,root"
+  else
+    line="$base:root"
+  fi
+  sed -i "s|^$name:.*|$line|" /etc/group 2>/dev/null || true
+}
+ensure_group 3003 aid_inet
+ensure_group 3004 aid_net_raw
+ensure_group 3009 aid_readproc
+exit 0
