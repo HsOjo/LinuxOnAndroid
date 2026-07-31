@@ -3,7 +3,11 @@ case $0 in
   */*) SD=${0%/*};;
   *) SD=.;;
 esac
-. "$SD/scripts/env.sh" 2>/dev/null || . "$SD/env.sh"
+if [ -f "$SD/scripts/env.sh" ]; then
+  . "$SD/scripts/env.sh"
+else
+  . "$SD/env.sh"
+fi
 OUT=$ROOT/etc/resolv.conf
 TMP=$ROOT/etc/.resolv.conf.$$
 collect() {

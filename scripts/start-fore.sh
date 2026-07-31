@@ -3,7 +3,11 @@ case $0 in
   */*) SD=${0%/*};;
   *) SD=.;;
 esac
-. "$SD/scripts/env.sh" 2>/dev/null || . "$SD/env.sh"
+if [ -f "$SD/scripts/env.sh" ]; then
+  . "$SD/scripts/env.sh"
+else
+  . "$SD/env.sh"
+fi
 [ "${CT_FORE:-0}" = 1 ] || exit 2
 OLD=.oldroot
 HOSTDEV=$ROOT/.hostdev
