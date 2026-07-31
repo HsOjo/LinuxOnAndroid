@@ -35,4 +35,7 @@ ensure_group_no_root() {
 ensure_group 3003 aid_inet
 ensure_group 3004 aid_net_raw
 ensure_group_no_root 3009 aid_readproc
+if [ ! -x /usr/sbin/capsh ] && command -v apt-get >/dev/null 2>&1; then
+  apt-get update >/var/log/apt-libcap.log 2>&1 && apt-get install -y --no-install-recommends libcap2-bin >>/var/log/apt-libcap.log 2>&1 || true
+fi
 exit 0

@@ -27,6 +27,28 @@ fi
 chmod 0755 "$BB" 2>/dev/null || true
 [ -x "$BB" ] || exit 4
 "$BB" true 2>/dev/null || exit 5
+if [ -n "$ROOTFS_IMG" ]; then
+  . "$SD/scripts/rootfs-loop.sh" || exit 1
+  if [ ! -f "$ROOTFS_IMG" ] && [ -x "$ROOT/bin/sh" ] && ! "$BB" grep -q " $ROOT " /proc/self/mounts 2>/dev/null; then
+    rootfs_loop_prepare || exit 8
+    tmpmnt=$RUN/.rootfs-mnt.$$
+    "$BB" mkdir -p "$RUN" "$tmpmnt" || exit 1
+    rootfs_loop_mount_at "$tmpmnt" || exit 8
+    "$BB" cp -a "$ROOT"/. "$tmpmnt"/ || { "$BB" umount -l "$tmpmnt" 2>/dev/null || true; exit 9; }
+    "$BB" umount "$tmpmnt" 2>/dev/null || "$BB" umount -l "$tmpmnt" 2>/dev/null || exit 10
+    "$BB" rmdir "$tmpmnt" 2>/dev/null || true
+    if [ "${ROOTFS_BACKUP:-1}" = 1 ]; then
+      ts=$("$BB" date +%s 2>/dev/null || echo $$)
+      "$BB" mv "$ROOT" "$ROOT.bak.$ts" || exit 11
+    else
+      "$BB" rm -rf "$ROOT" || exit 11
+    fi
+    "$BB" mkdir -p "$ROOT" || exit 1
+    rootfs_loop_mount_at "$ROOT" || exit 12
+  else
+    rootfs_loop_mount || exit 8
+  fi
+fi
 if [ ! -x "$ROOT/bin/sh" ] && [ -n "${ROOTFS_URL:-}" ]; then
   "$BB" mkdir -p "$ROOT" "$CTDIR/run" || exit 1
   tmp=$CTDIR/run/.rootfs.$$

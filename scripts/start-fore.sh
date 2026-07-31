@@ -9,6 +9,14 @@ else
   . "$SD/env.sh"
 fi
 [ "${CT_FORE:-0}" = 1 ] || exit 2
+if [ -n "$ROOTFS_IMG" ] && [ -f "$ROOTFS_IMG" ]; then
+  if [ -f "$SD/scripts/rootfs-loop.sh" ]; then
+    . "$SD/scripts/rootfs-loop.sh" || exit 11
+  else
+    . "$SD/rootfs-loop.sh" || exit 11
+  fi
+  rootfs_loop_mount || exit 11
+fi
 OLD=.oldroot
 HOSTDEV=$ROOT/.hostdev
 inject() {

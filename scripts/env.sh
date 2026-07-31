@@ -7,6 +7,11 @@ case $0 in
 esac
 CTDIR=$(cd "$CTDIR" && pwd) || exit 1
 ROOT=$CTDIR/rootfs
+ROOTFS_IMG=${ROOTFS_IMG:-$CTDIR/rootfs.img}
+LOOP_SIZE=${LOOP_SIZE:-40G}
+ROOTFS_LOOP=${ROOTFS_LOOP:-}
+ROOTFS_LOOP_DETACH=${ROOTFS_LOOP_DETACH:-0}
+ROOTFS_BACKUP=${ROOTFS_BACKUP:-1}
 RUN=$CTDIR/run
 PIDFILE=$RUN/container.pid
 LOG=$RUN/container.log

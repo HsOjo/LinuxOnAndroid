@@ -4,6 +4,10 @@ case $0 in
   *) SD=.;;
 esac
 . "$SD/scripts/env.sh"
+if [ -n "$ROOTFS_IMG" ] && [ -f "$ROOTFS_IMG" ]; then
+  . "$SD/scripts/rootfs-loop.sh" || exit 1
+  rootfs_loop_mount || exit 1
+fi
 [ -L "$ROOT/bin/sh" ] || [ -x "$ROOT/bin/sh" ] || exit 1
 [ -x "$CTDIR/lib/boot-inner" ] || exit 1
 [ -x "$CTDIR/lib/setup-dev" ] || exit 1
