@@ -2,7 +2,16 @@
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 umask 022
 mkdir -p /run /var/log
-[ -x /etc/rc.local ] && /etc/rc.local >>/var/log/rc.local.log 2>&1 &
+if [ -x /sbin/openrc ]; then
+  rl=default
+  [ -f /etc/rc.conf ] && rl=$( . /etc/rc.conf; echo "${rc_default_runlevel:-default}" )
+  [ -n "$rl" ] || rl=default
+  openrc sysinit >>/var/log/openrc.log 2>&1 || true
+  openrc boot >>/var/log/openrc.log 2>&1 || true
+  openrc "$rl" >>/var/log/openrc.log 2>&1 || true
+elif [ ! -f /etc/init.d/local ] && [ -x /etc/rc.local ]; then
+  /etc/rc.local >>/var/log/rc.local.log 2>&1 &
+fi
 cleanup() {
   for p in $(jobs -p); do kill "$p" 2>/dev/null; done
 }
