@@ -1,5 +1,10 @@
 #!/bin/sh
+if [ "${LOA_ENV_CLEAN:-0}" != 1 ] && [ -x /usr/bin/env ]; then
+  exec /usr/bin/env -i LOA_ENV_CLEAN=1 PATH=/bin:/sbin:/usr/bin:/usr/sbin HOME=/root TMPDIR=/tmp /bin/sh /sbin/boot-inner
+fi
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export HOME=/root TMPDIR=/tmp
+mkdir -p /tmp 2>/dev/null || true
 mount -t proc -o hidepid=2,gid=3009 proc /proc 2>/dev/null || true
 mount -t sysfs -o ro sysfs /sys 2>/dev/null || true
 mkdir -p /sys/fs/cgroup 2>/dev/null || true
