@@ -12,8 +12,13 @@ mknod -m 644 /dev/random c 1 8 2>/dev/null || true
 mknod -m 644 /dev/urandom c 1 9 2>/dev/null || true
 mknod -m 666 /dev/tty c 5 0 2>/dev/null || true
 mknod -m 600 /dev/console c 5 1 2>/dev/null || true
-mount -t devpts -o newinstance,ptmxmode=666,mode=620,gid=5 devpts /dev/pts 2>/dev/null || true
-ln -sf pts/ptmx /dev/ptmx 2>/dev/null || true
+mount -t devpts -o newinstance,ptmxmode=666,mode=620,gid=5 devpts /dev/pts 2>/dev/null || mount -t devpts devpts /dev/pts 2>/dev/null || true
+rm -f /dev/ptmx 2>/dev/null || true
+if [ -e /dev/pts/ptmx ]; then
+  ln -sf pts/ptmx /dev/ptmx 2>/dev/null || true
+else
+  mknod -m 666 /dev/ptmx c 5 2 2>/dev/null || true
+fi
 bind_node() {
   src="$DEVSRC${1#/dev}"
   dst="$1"

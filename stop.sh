@@ -7,6 +7,7 @@ esac
 say() { "$BB" printf '%s\n' "$*"; }
 [ -f "$PIDFILE" ] || exit 0
 P=$("$BB" cat "$PIDFILE" 2>/dev/null || true)
+ct_pid_ok "$P" || { "$BB" rm -f "$PIDFILE"; exit 0; }
 if [ -n "$P" ] && [ -d "/proc/$P" ]; then
   MNT=$("$BB" readlink "/proc/$P/ns/mnt" 2>/dev/null || true)
   UTS=$("$BB" readlink "/proc/$P/ns/uts" 2>/dev/null || true)

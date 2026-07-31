@@ -17,3 +17,11 @@ export PATH
 BB=$CTDIR/bin/busybox
 [ -x "$BB" ] || BB=$(command -v busybox 2>/dev/null || true)
 [ -n "$BB" ] || BB=busybox
+ct_pid_ok() {
+  [ -n "${1:-}" ] && [ -d "/proc/$1" ] || return 1
+  C=$("$BB" tr '\0' ' ' < "/proc/$1/cmdline" 2>/dev/null || true)
+  case "$C" in
+    *start-fore.sh*|*boot-inner*|*container-init*) return 0;;
+  esac
+  return 1
+}

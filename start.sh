@@ -4,7 +4,7 @@ case $0 in
   *) SD=.;;
 esac
 . "$SD/scripts/env.sh"
-[ -x "$ROOT/bin/sh" ] || exit 1
+[ -L "$ROOT/bin/sh" ] || [ -x "$ROOT/bin/sh" ] || exit 1
 [ -x "$CTDIR/lib/boot-inner" ] || exit 1
 [ -x "$CTDIR/lib/setup-dev" ] || exit 1
 [ -x "$CTDIR/lib/container-init" ] || exit 1
@@ -14,7 +14,10 @@ esac
 [ -x "$BB" ] || exit 1
 if [ -f "$PIDFILE" ]; then
   P=$("$BB" cat "$PIDFILE" 2>/dev/null || true)
-  [ -n "$P" ] && [ -d "/proc/$P" ] && exit 0
+  if ct_pid_ok "$P"; then
+    exit 0
+  fi
+  "$BB" rm -f "$PIDFILE"
 fi
 "$BB" mkdir "$LOCK" 2>/dev/null || exit 0
 trap '"$BB" rmdir "$LOCK" 2>/dev/null' EXIT
