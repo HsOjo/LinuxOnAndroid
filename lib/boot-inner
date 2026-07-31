@@ -1,5 +1,31 @@
 #!/bin/sh
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+if [ "${LOA_PROC_ISOLATED:-0}" != 1 ] && [ -x /usr/bin/python3 ]; then
+  LOA_PROC_ISOLATED=1
+  export LOA_PROC_ISOLATED
+  exec /usr/bin/python3 - <<'PY'
+import ctypes, os
+CAP_SYS_PTRACE = 19
+PR_CAPBSET_DROP = 24
+libc = ctypes.CDLL(None, use_errno=True)
+if libc.prctl(PR_CAPBSET_DROP, CAP_SYS_PTRACE, 0, 0, 0) != 0:
+    err = ctypes.get_errno()
+    raise OSError(err, os.strerror(err))
+seen = set()
+keep = []
+for group in os.getgroups():
+    if group == 3009 or group in seen:
+        continue
+    seen.add(group)
+    keep.append(group)
+for group in (3003, 3004):
+    if group not in seen:
+        seen.add(group)
+        keep.append(group)
+os.setgroups(keep or [0])
+os.execv("/bin/sh", ["/bin/sh", "/sbin/boot-inner"])
+PY
+fi
 mount -t proc -o hidepid=2,gid=3009 proc /proc 2>/dev/null || true
 mount -t sysfs -o ro sysfs /sys 2>/dev/null || true
 mkdir -p /sys/fs/cgroup 2>/dev/null || true
