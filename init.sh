@@ -51,5 +51,5 @@ if [ ! -x "$ROOT/bin/sh" ] && [ -n "${ROOTFS_URL:-}" ]; then
     done
   fi
 fi
-echo "$BB"
+"$BB" echo "$BB"
 exit 0

@@ -13,15 +13,15 @@ esac
 [ -x "$CTDIR/scripts/start-fore.sh" ] || exit 1
 [ -x "$BB" ] || exit 1
 if [ -f "$PIDFILE" ]; then
-  P=$(cat "$PIDFILE" 2>/dev/null || true)
+  P=$("$BB" cat "$PIDFILE" 2>/dev/null || true)
   [ -n "$P" ] && [ -d "/proc/$P" ] && exit 0
 fi
-mkdir "$LOCK" 2>/dev/null || exit 0
-trap 'rmdir "$LOCK" 2>/dev/null' EXIT
-mkdir -p "$RUN"
+"$BB" mkdir "$LOCK" 2>/dev/null || exit 0
+trap '"$BB" rmdir "$LOCK" 2>/dev/null' EXIT
+"$BB" mkdir -p "$RUN"
 CT_FORE=1 "$BB" setsid "$BB" unshare -m -u /system/bin/sh "$CTDIR/scripts/start-fore.sh" >>"$LOG" 2>&1 &
 P=$!
-echo "$P" > "$PIDFILE"
-sleep 1
+"$BB" printf '%s\n' "$P" > "$PIDFILE"
+"$BB" sleep 1
 [ -d "/proc/$P" ] || exit 4
 exit 0
