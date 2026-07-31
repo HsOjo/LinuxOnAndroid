@@ -19,11 +19,8 @@ ensure_group() {
   fi
   sed -i "s|^$name:.*|$line|" /etc/group 2>/dev/null || true
 }
-ensure_group_no_root() {
-  gid=$1
-  name=$2
-  grep -q "^$name:" /etc/group 2>/dev/null || addgroup -g "$gid" "$name" 2>/dev/null || addgroup -S -g "$gid" "$name" 2>/dev/null || true
-  grep -q "^$name:" /etc/group 2>/dev/null || echo "$name:x:$gid:" >> /etc/group
+strip_group_root() {
+  name=$1
   line=$(grep "^$name:" /etc/group 2>/dev/null || true)
   [ -n "$line" ] || return 0
   members=${line##*:}
@@ -34,7 +31,7 @@ ensure_group_no_root() {
 }
 ensure_group 3003 aid_inet
 ensure_group 3004 aid_net_raw
-ensure_group_no_root 3009 aid_readproc
+strip_group_root aid_readproc
 if [ ! -x /usr/sbin/capsh ] && command -v apk >/dev/null 2>&1; then
   apk update >/var/log/apk-libcap.log 2>&1 && apk add --no-cache libcap-utils >>/var/log/apk-libcap.log 2>&1 || true
 fi
