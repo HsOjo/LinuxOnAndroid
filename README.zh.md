@@ -27,6 +27,8 @@
 ./stop.sh
 ```
 
+可选开机自启：`./setup_magisk_module.sh` 会为当前目录安装一个可被 Magisk 管理的模块；`./setup_magisk_module.sh remove` 标记重启后移除，`disable`/`enable` 可开关。移动目录后需重跑。
+
 `ROOTFS_URL=... ./init.sh` 会在 `rootfs/bin/sh` 缺失时下载并解压 rootfs 归档。`start.sh` 不依赖固定安装路径，可从任意当前目录启动；`CTDIR` 由脚本路径推导。启动时会同步 DNS；运行中网络变化后可重跑 `scripts/dns-sync.sh`。
 
 ## 说明

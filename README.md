@@ -27,6 +27,8 @@ Run a Linux rootfs on a rooted Android device with the host kernel. It uses a pr
 ./stop.sh
 ```
 
+Optional boot autostart: `./setup_magisk_module.sh` installs a manageable Magisk module for the current directory; `./setup_magisk_module.sh remove` schedules removal, and `disable`/`enable` toggles it. Re-run after moving the directory.
+
 `ROOTFS_URL=... ./init.sh` downloads and extracts a rootfs archive when `rootfs/bin/sh` is missing. `start.sh` can be run from any current directory; `CTDIR` is derived from the script path. DNS is synced at start; while running, rerun `scripts/dns-sync.sh` after network changes.
 
 ## Notes
