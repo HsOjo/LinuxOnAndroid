@@ -7,7 +7,7 @@ mount -t cgroup2 -o rw,nosuid,nodev,noexec,relatime cgroup2 /sys/fs/cgroup 2>/de
 DEVSRC=/.hostdev /sbin/setup-dev
 umount -l /.hostdev 2>/dev/null || true
 rmdir /.hostdev 2>/dev/null || true
-mount -t tmpfs -o ro,mode=0555,nodev,nosuid,noexec tmpfs /.oldroot 2>/dev/null || true
+umount -l /.oldroot 2>/dev/null || mount -t tmpfs -o ro,mode=0555,nodev,nosuid,noexec tmpfs /.oldroot 2>/dev/null || true
 if [ -f /etc/alpine-release ]; then
   [ -x /sbin/guest-init-alpine ] && /sbin/guest-init-alpine 2>/dev/null || true
 elif [ -f /etc/debian_version ]; then
