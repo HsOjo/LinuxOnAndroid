@@ -18,7 +18,6 @@
 - 内核支持 mount namespace、UTS namespace、`TMPFS`；默认 loop rootfs 还需要 `BLK_DEV_LOOP` 和 `EXT4_FS`。`TUN`/`FUSE` 可选。
 - SELinux 策略允许 root shell 执行 `unshare`、bind mount、`losetup`、`pivot_root`。
 - rootfs 需匹配手机架构，并提供 `/bin/sh` 与基础工具（`mount`、`umount`、`mknod`、`ln`、`env`）。Alpine 和 Debian 由 `lib/guest-init-*` 处理。
-- 进程可见性隔离需要 guest 内有 `capsh`（Alpine 为 `libcap-utils`，Debian 为 `libcap2-bin`）；guest 初始化会在有网络时尝试安装。
 
 ## 使用
 
@@ -49,7 +48,7 @@ ROOTFS_LOOP_DETACH=1 ./stop.sh # stop 时同时 detach loop 设备
 
 - Android paranoid networking 需要 guest 内存在对应 Android gid。guest 初始化脚本会创建 `aid_inet=3003`、`aid_net_raw=3004` 并把 `root` 加入。
 - `enter.sh` 和容器启动都使用干净环境（`env -i`，只带 `PATH`、`HOME=/root`、`TMPDIR=/tmp`），不继承 adb/Android 变量。
-- 有 `capsh` 时，容器初始化和 `enter.sh` 会在补完 Android gid 后丢弃 `CAP_SYS_PTRACE`。配合 `hidepid=2,gid=3009` 可隐藏大部分宿主进程，但这不是 PID namespace，也不是安全边界。
+- 主容器不做权限降级：guest 内 root 保留完整 capabilities，并与宿主共享 pid/network namespace，可以看到并影响宿主进程。这是便利容器，不是安全边界。
 - `pivot_root` 后会尽量把旧 Android 根从容器 mount namespace 分离，避免 `df` 被 `/.oldroot` 条目污染。
 - 默认只 bind 通用设备节点：`/dev/tun`、存在时的 `/dev/net/tun`，以及 `/dev/fuse`。GPU/相机/音频节点默认不包含。
 - `scripts/start-fore.sh` 受 `CT_FORE=1` 保护；直接运行可能破坏当前 mount namespace。

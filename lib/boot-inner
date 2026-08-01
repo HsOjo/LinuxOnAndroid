@@ -5,7 +5,7 @@ fi
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export HOME=/root TMPDIR=/tmp
 mkdir -p /tmp 2>/dev/null || true
-mount -t proc -o hidepid=2,gid=3009 proc /proc 2>/dev/null || true
+mount -t proc proc /proc 2>/dev/null || true
 mount -t sysfs -o ro sysfs /sys 2>/dev/null || true
 mkdir -p /sys/fs/cgroup 2>/dev/null || true
 mount -t cgroup2 -o rw,nosuid,nodev,noexec,relatime cgroup2 /sys/fs/cgroup 2>/dev/null || true
@@ -19,11 +19,4 @@ elif [ -f /etc/debian_version ]; then
   [ -x /sbin/guest-init-debian ] && /sbin/guest-init-debian 2>/dev/null || true
 fi
 echo 800 > /proc/self/oom_score_adj 2>/dev/null || true
-if [ "${LOA_PROC_ISOLATED:-0}" != 1 ]; then
-  if [ -x /usr/sbin/capsh ]; then
-    LOA_PROC_ISOLATED=1
-    export LOA_PROC_ISOLATED
-    exec /usr/sbin/capsh --user=root --drop=cap_sys_ptrace --shell=/bin/sh -- /sbin/container-init
-  fi
-fi
 exec /sbin/container-init

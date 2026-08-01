@@ -18,7 +18,6 @@ Run a Linux rootfs on a rooted Android device with the host kernel. It uses a pr
 - Kernel with mount and UTS namespaces, `TMPFS`; for the default loop rootfs also `BLK_DEV_LOOP` and `EXT4_FS`. `TUN`/`FUSE` are optional.
 - SELinux policy that allows the root shell to `unshare`, bind-mount, `losetup`, and `pivot_root`.
 - A rootfs matching the phone architecture with `/bin/sh` and basic tools (`mount`, `umount`, `mknod`, `ln`, `env`). Alpine and Debian are handled by `lib/guest-init-*`.
-- For proc-visibility isolation, the guest needs `capsh` (`libcap-utils` on Alpine, `libcap2-bin` on Debian). Guest init tries to install it when the network is available.
 
 ## Usage
 
@@ -49,7 +48,7 @@ ROOTFS_LOOP_DETACH=1 ./stop.sh # also detach the loop device at stop
 
 - Android paranoid networking needs Android group IDs in the guest. The guest init scripts create `aid_inet=3003` and `aid_net_raw=3004` and add `root` to them.
 - `enter.sh` and container boot start with a clean environment (`env -i` with `PATH`, `HOME=/root`, `TMPDIR=/tmp`) instead of inheriting adb/Android variables.
-- When `capsh` is available, container init and `enter.sh` drop `CAP_SYS_PTRACE` after Android groups are applied. Together with `hidepid=2,gid=3009` this hides most host processes, but it is not a PID namespace or security boundary.
+- The guest is not privilege-isolated: guest root keeps the full capability set and shares the pid/network namespaces with the host, so it can see and affect host processes. This is a convenience container, not a security boundary.
 - After `pivot_root`, the old Android root is detached from the container mount namespace when possible, so `df` is not polluted by `/.oldroot` entries.
 - Only generic device nodes are bound by default: `/dev/tun`, `/dev/net/tun` when present, and `/dev/fuse`. GPU/camera/audio nodes are intentionally not included.
 - `scripts/start-fore.sh` is guarded by `CT_FORE=1`; running it directly can break the current mount namespace.
