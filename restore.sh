@@ -42,7 +42,7 @@ case "$src" in
   *.gz) "$BB" gzip -dc "$src" | "$BB" tar -xf - -C "$ROOT" 2>/dev/null;;
   *) "$BB" tar -xf "$src" -C "$ROOT" 2>/dev/null;;
 esac
-if [ -x "$ROOT/bin/sh" ]; then
+if [ -L "$ROOT/bin/sh" ] || [ -x "$ROOT/bin/sh" ]; then
   "$BB" sync
   ctlog "restore: done"
   say "restore: done"

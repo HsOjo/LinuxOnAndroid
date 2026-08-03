@@ -20,7 +20,7 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
-[ -x "$ROOT/bin/sh" ] || { say "backup: $ROOT has no rootfs"; exit 1; }
+[ -L "$ROOT/bin/sh" ] || [ -x "$ROOT/bin/sh" ] || { say "backup: $ROOT has no rootfs"; exit 1; }
 "$BB" mkdir -p "$BACKUP_DIR" 2>/dev/null || { say "backup: mkdir $BACKUP_DIR failed"; exit 1; }
 sz=$("$BB" du -sm "$ROOT" 2>/dev/null | "$BB" cut -f1)
 free=$("$BB" df -m "$BACKUP_DIR" 2>/dev/null | "$BB" awk 'NF>=6{print $(NF-2)}' | "$BB" tail -1)
