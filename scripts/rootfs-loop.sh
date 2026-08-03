@@ -68,6 +68,10 @@ rootfs_loop_prepare() {
   ctlog "loop: using $ROOTFS_LOOP_DEV (created=$ROOTFS_LOOP_CREATED)"
   if [ "$ROOTFS_LOOP_CREATED" = 1 ]; then
     "$BB" mke2fs -F -b 4096 "$ROOTFS_LOOP_DEV" || { ctlog "loop: mke2fs failed"; return 1; }
+  elif "$BB" e2fsck -V >/dev/null 2>&1; then
+    "$BB" e2fsck -p "$ROOTFS_LOOP_DEV" >/dev/null 2>&1
+    rc=$?
+    [ "$rc" -le 1 ] || ctlog "loop: e2fsck rc=$rc on $ROOTFS_LOOP_DEV"
   fi
   export ROOTFS_LOOP_DEV ROOTFS_LOOP_CREATED
 }
