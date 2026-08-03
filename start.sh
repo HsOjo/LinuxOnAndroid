@@ -28,31 +28,14 @@ if [ -f "$PIDFILE" ]; then
 fi
 "$BB" mkdir "$LOCK" 2>/dev/null || { ctlog "start: another start in progress"; exit 0; }
 trap '"$BB" rmdir "$LOCK" 2>/dev/null' EXIT
-close_fds() {
-  i=3
-  while [ "$i" -le 19 ]; do
-    eval "exec $i<&- $i>&-" 2>/dev/null
-    i=$((i+1))
-  done
-}
 "$BB" mkdir -p "$RUN"
-(
-  close_fds
-  CT_FORE=1 exec "$BB" setsid "$BB" unshare -m -u /system/bin/sh "$CTDIR/scripts/start-fore.sh" >>"$LOG" 2>&1
-) </dev/null &
+CT_FORE=1 "$BB" setsid "$BB" unshare -m -u /system/bin/sh "$CTDIR/scripts/start-fore.sh" </dev/null >>"$LOG" 2>&1 &
 P=$!
 "$BB" printf '%s\n' "$P" > "$PIDFILE"
 "$BB" sleep 1
 [ -d "/proc/$P" ] || { ctlog "start: foreground died early (pid $P)"; exit 4; }
 if [ "${DNS_SYNC_INTERVAL:-0}" -gt 0 ] 2>/dev/null; then
-  (
-    close_fds
-    while :; do
-      "$BB" sleep "$DNS_SYNC_INTERVAL" 2>/dev/null || break
-      [ -f "$PIDFILE" ] || break
-      "$CTDIR/scripts/dns-sync.sh" >/dev/null 2>&1 || true
-    done
-  ) </dev/null >>/dev/null 2>&1 &
+  "$BB" sh -c 'for f in /proc/self/fd/*; do d=${f##*/}; case $d in 0|1|2) ;; *) eval "exec $d<&- $d>&-" 2>/dev/null;; esac; done; while :; do "$1" sleep "$2" 2>/dev/null || break; [ -f "$3" ] || break; "$4" >/dev/null 2>&1 || true; done' sh "$BB" "$DNS_SYNC_INTERVAL" "$PIDFILE" "$CTDIR/scripts/dns-sync.sh" </dev/null >>/dev/null 2>&1 &
   "$BB" printf '%s\n' "$!" > "$RUN/dns-watchdog.pid"
   ctlog "start: dns watchdog launched (pid $!, interval ${DNS_SYNC_INTERVAL}s)"
 fi
