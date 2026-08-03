@@ -50,9 +50,13 @@ rootfs_loop_prepare() {
   [ -n "$ROOTFS_IMG" ] || return 0
   ROOTFS_LOOP_CREATED=0
   if [ ! -f "$ROOTFS_IMG" ]; then
-    ctlog "loop: create image $ROOTFS_IMG ($LOOP_SIZE)"
+    ctlog "loop: create image $ROOTFS_IMG ($LOOP_SIZE, sparse=${ROOTFS_SPARSE:-0})"
     "$BB" mkdir -p "${ROOTFS_IMG%/*}" || { ctlog "loop: mkdir image dir failed"; return 1; }
-    "$BB" fallocate -l "$LOOP_SIZE" "$ROOTFS_IMG" || { ctlog "loop: fallocate failed"; return 1; }
+    if [ "${ROOTFS_SPARSE:-0}" = 1 ]; then
+      "$BB" truncate -s "$LOOP_SIZE" "$ROOTFS_IMG" || { ctlog "loop: truncate failed"; return 1; }
+    else
+      "$BB" fallocate -l "$LOOP_SIZE" "$ROOTFS_IMG" || { ctlog "loop: fallocate failed"; return 1; }
+    fi
     ROOTFS_LOOP_CREATED=1
   fi
   ROOTFS_LOOP_DEV=$(rootfs_loop_find_by_backing 2>/dev/null || true)
