@@ -30,3 +30,8 @@ ct_pid_ok() {
   esac
   return 1
 }
+ctlog() {
+  [ -n "${LOG:-}" ] || return 0
+  "$BB" mkdir -p "${LOG%/*}" 2>/dev/null || true
+  "$BB" printf '%s %s\n' "$("$BB" date '+%m-%d %H:%M:%S' 2>/dev/null || echo '-')" "$*" >>"$LOG" 2>/dev/null || true
+}

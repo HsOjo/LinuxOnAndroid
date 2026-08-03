@@ -50,22 +50,24 @@ rootfs_loop_prepare() {
   [ -n "$ROOTFS_IMG" ] || return 0
   ROOTFS_LOOP_CREATED=0
   if [ ! -f "$ROOTFS_IMG" ]; then
-    "$BB" mkdir -p "${ROOTFS_IMG%/*}" || return 1
-    "$BB" fallocate -l "$LOOP_SIZE" "$ROOTFS_IMG" || return 1
+    ctlog "loop: create image $ROOTFS_IMG ($LOOP_SIZE)"
+    "$BB" mkdir -p "${ROOTFS_IMG%/*}" || { ctlog "loop: mkdir image dir failed"; return 1; }
+    "$BB" fallocate -l "$LOOP_SIZE" "$ROOTFS_IMG" || { ctlog "loop: fallocate failed"; return 1; }
     ROOTFS_LOOP_CREATED=1
   fi
   ROOTFS_LOOP_DEV=$(rootfs_loop_find_by_backing 2>/dev/null || true)
   if [ -z "$ROOTFS_LOOP_DEV" ]; then
-    ROOTFS_LOOP_DEV=$(rootfs_loop_find) || return 1
+    ROOTFS_LOOP_DEV=$(rootfs_loop_find) || { ctlog "loop: no free loop device"; return 1; }
     b=$(rootfs_loop_backing "$ROOTFS_LOOP_DEV")
     if [ -z "$b" ]; then
-      "$BB" losetup "$ROOTFS_LOOP_DEV" "$ROOTFS_IMG" || return 1
+      "$BB" losetup "$ROOTFS_LOOP_DEV" "$ROOTFS_IMG" || { ctlog "loop: losetup $ROOTFS_LOOP_DEV failed"; return 1; }
       b=$(rootfs_loop_backing "$ROOTFS_LOOP_DEV")
     fi
-    [ "$b" = "$ROOTFS_IMG" ] || return 1
+    [ "$b" = "$ROOTFS_IMG" ] || { ctlog "loop: backing mismatch on $ROOTFS_LOOP_DEV ($b)"; return 1; }
   fi
+  ctlog "loop: using $ROOTFS_LOOP_DEV (created=$ROOTFS_LOOP_CREATED)"
   if [ "$ROOTFS_LOOP_CREATED" = 1 ]; then
-    "$BB" mke2fs -F -b 4096 "$ROOTFS_LOOP_DEV" || return 1
+    "$BB" mke2fs -F -b 4096 "$ROOTFS_LOOP_DEV" || { ctlog "loop: mke2fs failed"; return 1; }
   fi
   export ROOTFS_LOOP_DEV ROOTFS_LOOP_CREATED
 }
@@ -76,8 +78,9 @@ rootfs_loop_mount_at() {
   [ -n "$ROOTFS_IMG" ] || return 0
   rootfs_loop_mounted "$1" && return 0
   [ -n "${ROOTFS_LOOP_DEV:-}" ] || rootfs_loop_prepare || return 1
-  "$BB" mkdir -p "$1" || return 1
-  "$BB" mount -t ext4 -o rw,relatime "$ROOTFS_LOOP_DEV" "$1" || return 1
+  "$BB" mkdir -p "$1" || { ctlog "loop: mkdir mountpoint $1 failed"; return 1; }
+  "$BB" mount -t ext4 -o rw,relatime "$ROOTFS_LOOP_DEV" "$1" || { ctlog "loop: mount $ROOTFS_LOOP_DEV -> $1 failed"; return 1; }
+  ctlog "loop: mounted $ROOTFS_LOOP_DEV at $1"
 }
 rootfs_loop_mount() {
   [ -n "$ROOTFS_IMG" ] || return 0
