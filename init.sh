@@ -74,5 +74,9 @@ if [ ! -x "$ROOT/bin/sh" ] && [ -n "${ROOTFS_URL:-}" ]; then
     done
   fi
 fi
+hn=$(getprop ro.product.device 2>/dev/null || true)
+if [ -n "$hn" ] && [ -d "$ROOT/etc" ]; then
+  "$BB" printf '%s\n' "$hn" > "$ROOT/etc/hostname" 2>/dev/null || true
+fi
 "$BB" echo "$BB"
 exit 0
