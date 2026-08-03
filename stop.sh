@@ -63,12 +63,14 @@ if [ -n "$P" ] && [ -d "/proc/$P" ]; then
   fi
 fi
 "$BB" rm -f "$ROOT/sbin/boot-inner" "$ROOT/sbin/setup-dev" "$ROOT/sbin/container-init" "$ROOT/sbin/guest-init-alpine" "$ROOT/sbin/guest-init-debian"
+"$BB" sync
 for mp in "$ROOT/.hostdev" "$ROOT/.oldroot" "$ROOT/dev/pts" "$ROOT/dev" "$ROOT/sys" "$ROOT/proc"; do
   while "$BB" grep -q " $mp " /proc/self/mounts 2>/dev/null; do "$BB" umount -l "$mp" 2>/dev/null || break; done
 done
 if [ -n "$ROOTFS_IMG" ]; then
   . "$SD/scripts/rootfs-loop.sh" 2>/dev/null || true
   rootfs_loop_umount 2>/dev/null || true
+  "$BB" sync
 fi
 "$BB" rm -f "$PIDFILE"
 exit 0
