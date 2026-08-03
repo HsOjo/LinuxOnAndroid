@@ -28,20 +28,31 @@ if [ -f "$PIDFILE" ]; then
 fi
 "$BB" mkdir "$LOCK" 2>/dev/null || { ctlog "start: another start in progress"; exit 0; }
 trap '"$BB" rmdir "$LOCK" 2>/dev/null' EXIT
+close_fds() {
+  i=3
+  while [ "$i" -le 19 ]; do
+    eval "exec $i<&- $i>&-" 2>/dev/null
+    i=$((i+1))
+  done
+}
 "$BB" mkdir -p "$RUN"
-CT_FORE=1 "$BB" setsid "$BB" unshare -m -u /system/bin/sh "$CTDIR/scripts/start-fore.sh" >>"$LOG" 2>&1 &
+(
+  close_fds
+  CT_FORE=1 exec "$BB" setsid "$BB" unshare -m -u /system/bin/sh "$CTDIR/scripts/start-fore.sh" >>"$LOG" 2>&1
+) </dev/null &
 P=$!
 "$BB" printf '%s\n' "$P" > "$PIDFILE"
 "$BB" sleep 1
 [ -d "/proc/$P" ] || { ctlog "start: foreground died early (pid $P)"; exit 4; }
 if [ "${DNS_SYNC_INTERVAL:-0}" -gt 0 ] 2>/dev/null; then
   (
+    close_fds
     while :; do
       "$BB" sleep "$DNS_SYNC_INTERVAL" 2>/dev/null || break
       [ -f "$PIDFILE" ] || break
       "$CTDIR/scripts/dns-sync.sh" >/dev/null 2>&1 || true
     done
-  ) &
+  ) </dev/null >>/dev/null 2>&1 &
   "$BB" printf '%s\n' "$!" > "$RUN/dns-watchdog.pid"
   ctlog "start: dns watchdog launched (pid $!, interval ${DNS_SYNC_INTERVAL}s)"
 fi
