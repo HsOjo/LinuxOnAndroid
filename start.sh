@@ -34,5 +34,16 @@ P=$!
 "$BB" printf '%s\n' "$P" > "$PIDFILE"
 "$BB" sleep 1
 [ -d "/proc/$P" ] || { ctlog "start: foreground died early (pid $P)"; exit 4; }
+if [ "${DNS_SYNC_INTERVAL:-0}" -gt 0 ] 2>/dev/null; then
+  (
+    while :; do
+      "$BB" sleep "$DNS_SYNC_INTERVAL" 2>/dev/null || break
+      [ -f "$PIDFILE" ] || break
+      "$CTDIR/scripts/dns-sync.sh" >/dev/null 2>&1 || true
+    done
+  ) &
+  "$BB" printf '%s\n' "$!" > "$RUN/dns-watchdog.pid"
+  ctlog "start: dns watchdog launched (pid $!, interval ${DNS_SYNC_INTERVAL}s)"
+fi
 ctlog "start: launched (pid $P)"
 exit 0

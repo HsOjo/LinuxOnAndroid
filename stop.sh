@@ -5,6 +5,11 @@ case $0 in
 esac
 . "$SD/scripts/env.sh"
 say() { "$BB" printf '%s\n' "$*"; }
+if [ -f "$RUN/dns-watchdog.pid" ]; then
+  W=$("$BB" cat "$RUN/dns-watchdog.pid" 2>/dev/null || true)
+  [ -n "$W" ] && "$BB" kill "$W" 2>/dev/null || true
+  "$BB" rm -f "$RUN/dns-watchdog.pid"
+fi
 [ -f "$PIDFILE" ] || exit 0
 P=$("$BB" cat "$PIDFILE" 2>/dev/null || true)
 ct_pid_ok "$P" || { "$BB" rm -f "$PIDFILE"; exit 0; }

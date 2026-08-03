@@ -34,8 +34,12 @@ mkdir -p "$ROOT/etc" || exit 0
 collect 1 > "$TMP" 2>/dev/null || true
 [ -s "$TMP" ] || collect 0 > "$TMP" 2>/dev/null || true
 if [ -s "$TMP" ]; then
-  chmod 0644 "$TMP" 2>/dev/null || true
-  mv "$TMP" "$OUT" 2>/dev/null || rm -f "$TMP"
+  if [ -f "$OUT" ] && "$BB" cmp -s "$TMP" "$OUT" 2>/dev/null; then
+    rm -f "$TMP"
+  else
+    chmod 0644 "$TMP" 2>/dev/null || true
+    mv "$TMP" "$OUT" 2>/dev/null || rm -f "$TMP"
+  fi
 else
   rm -f "$TMP"
   [ -f "$OUT" ] || echo 'nameserver 223.5.5.5' > "$OUT"
