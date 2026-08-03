@@ -33,7 +33,11 @@ rootfs_loop_find() {
   for d in $(rootfs_loop_devs); do
     [ -z "$(rootfs_loop_backing "$d")" ] && { echo "$d"; return 0; }
   done
-  return 1
+  d=$("$BB" losetup -f 2>/dev/null || true)
+  [ -n "$d" ] || return 1
+  [ -b "$d" ] || "$BB" mknod "$d" b 7 "${d##*loop}" 2>/dev/null || true
+  [ -b "$d" ] || return 1
+  echo "$d"
 }
 rootfs_loop_find_by_backing() {
   rootfs_loop_nodes
