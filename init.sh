@@ -4,6 +4,7 @@ case $0 in
   *) SD=.;;
 esac
 . "$SD/scripts/env.sh"
+setenforce 0 2>/dev/null || true
 BBD=$CTDIR/bin
 BB=$BBD/busybox
 WGET_UA=${WGET_UA:-Wget/1.36.1.1}
