@@ -22,6 +22,7 @@ if [ -n "$P" ] && [ -d "/proc/$P" ]; then
     for d in /proc/[0-9]*; do
       p=${d#/proc/}
       [ "$p" = "$$" ] && continue
+      [ "$("$BB" awk '{print $3}' "$d/stat" 2>/dev/null || true)" = Z ] && continue
       if [ -n "$MNT" ] && [ "$("$BB" readlink "$d/ns/mnt" 2>/dev/null || true)" != "$MNT" ]; then continue; fi
       if [ -n "$UTS" ] && [ "$("$BB" readlink "$d/ns/uts" 2>/dev/null || true)" != "$UTS" ]; then continue; fi
       echo "$p"
