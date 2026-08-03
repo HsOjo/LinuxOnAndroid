@@ -26,23 +26,35 @@
 ./start.sh
 ./enter.sh
 ./stop.sh
+./backup.sh
+./restore.sh
 ```
 
 可选开机自启：`./setup_magisk_module.sh` 会为当前目录安装一个可被 Magisk 管理的模块；`./setup_magisk_module.sh remove` 标记重启后移除，`disable`/`enable` 可开关。移动目录后需重跑。若 SELinux 阻止 loop rootfs（内核对 `rootfs.img` 的写操作被拒绝），`./init.sh` 会尽力执行 `setenforce 0`，`./setup_selinux_magisk_module.sh` 则安装一个开机重复该操作的 Magisk 模块，同样支持 `remove`/`disable`/`enable` 子命令。
 
-`ROOTFS_URL=... ./init.sh` 会在 `rootfs/bin/sh` 缺失时下载并解压 rootfs 归档。`start.sh` 不依赖固定安装路径，可从任意当前目录启动；`CTDIR` 由脚本路径推导。启动时会同步 DNS；运行中网络变化后可重跑 `scripts/dns-sync.sh`。
+`ROOTFS_URL=... ./init.sh` 会在 `rootfs/bin/sh` 缺失时下载并解压 rootfs 归档。`start.sh` 不依赖固定安装路径，可从任意当前目录启动；`CTDIR` 由脚本路径推导。启动时会同步 DNS，之后由宿主侧看门狗按 `DNS_SYNC_INTERVAL` 秒轮询保持同步（默认 `30`，设为 `0` 关闭）。
 
 loop rootfs 默认值：
 
 ```sh
 ROOTFS_URL=... LOOP_SIZE=80G ROOTFS_BACKUP=0 ./init.sh
 ROOTFS_IMG= ./init.sh          # 关闭 loop 镜像，直接使用 rootfs/ 目录
+ROOTFS_SPARSE=1 ./init.sh      # 以稀疏文件方式创建镜像（默认关闭）
 ROOTFS_LOOP_DETACH=1 ./stop.sh # stop 时同时 detach loop 设备
 ```
 
 - `ROOTFS_IMG` 默认是 `$CTDIR/rootfs.img`；`LOOP_SIZE` 默认 `40G`。
 - 如果已存在 `rootfs/` 但还没有 `rootfs.img`，`init.sh` 会把它迁移进新的 ext4 镜像。旧目录默认移动为 `rootfs.bak.<时间戳>`；`ROOTFS_BACKUP=0` 会直接删除。
 - 默认 `stop.sh` 只卸载 rootfs，保留 loop attach，方便下次快速启动。
+
+备份与恢复：
+
+- `backup.sh` 通过 `tar | gzip` 流式管道把 rootfs（已挂载的镜像或纯目录）打包为 `$BACKUP_DIR/rootfs.<时间戳>.tar.gz`。容器运行中也可执行；镜像未挂载时会临时挂载、结束后卸载；只保留最新 `ROOTFS_BACKUP_KEEP` 份（默认 `2`；`BACKUP_DIR` 默认 `$CTDIR/backup`）。
+- `restore.sh [归档]` 恢复最新（或指定）备份：需要先 stop 容器，恢复会清空 rootfs 再解包。
+
+诊断：
+
+- 启动/停止各阶段会记录到 `run/container.log`；日志超过 `LOG_MAX_KB` KiB（默认 `256`）后自动截断保留较新的一半。
 
 ## 说明
 

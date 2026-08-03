@@ -26,23 +26,35 @@ Run a Linux rootfs on a rooted Android device with the host kernel. It uses a pr
 ./start.sh
 ./enter.sh
 ./stop.sh
+./backup.sh
+./restore.sh
 ```
 
 Optional boot autostart: `./setup_magisk_module.sh` installs a manageable Magisk module for the current directory; `./setup_magisk_module.sh remove` schedules removal, and `disable`/`enable` toggles it. Re-run after moving the directory. If SELinux blocks the loop rootfs (kernel write denials on `rootfs.img`), `./init.sh` applies `setenforce 0` best-effort and `./setup_selinux_magisk_module.sh` installs a Magisk module that repeats it at boot; it supports the same `remove`/`disable`/`enable` subcommands.
 
-`ROOTFS_URL=... ./init.sh` downloads and extracts a rootfs archive when `rootfs/bin/sh` is missing. `start.sh` can be run from any current directory; `CTDIR` is derived from the script path. DNS is synced at start; while running, rerun `scripts/dns-sync.sh` after network changes.
+`ROOTFS_URL=... ./init.sh` downloads and extracts a rootfs archive when `rootfs/bin/sh` is missing. `start.sh` can be run from any current directory; `CTDIR` is derived from the script path. DNS is synced at start and kept in sync by a host-side watchdog that polls every `DNS_SYNC_INTERVAL` seconds (default `30`; `0` disables it).
 
 Loop rootfs defaults:
 
 ```sh
 ROOTFS_URL=... LOOP_SIZE=80G ROOTFS_BACKUP=0 ./init.sh
 ROOTFS_IMG= ./init.sh          # disable the loop image and use rootfs/ directly
+ROOTFS_SPARSE=1 ./init.sh      # create the image as a sparse file (default off)
 ROOTFS_LOOP_DETACH=1 ./stop.sh # also detach the loop device at stop
 ```
 
 - `ROOTFS_IMG` defaults to `$CTDIR/rootfs.img`; `LOOP_SIZE` defaults to `40G`.
 - If `rootfs/` already exists and `rootfs.img` is missing, `init.sh` migrates it into a new ext4 image. The old directory is moved to `rootfs.bak.<timestamp>` unless `ROOTFS_BACKUP=0`, which deletes it.
 - By default `stop.sh` unmounts the rootfs but keeps the loop device attached for a fast next start.
+
+Backup and restore:
+
+- `backup.sh` packs the rootfs (mounted image or plain directory) into `$BACKUP_DIR/rootfs.<timestamp>.tar.gz` via a streaming `tar | gzip` pipe. It works while the container is running, mounts the image temporarily when needed, and keeps the newest `ROOTFS_BACKUP_KEEP` archives (default `2`; `BACKUP_DIR` defaults to `$CTDIR/backup`).
+- `restore.sh [archive]` restores the newest archive (or the given one): the container must be stopped; it wipes the rootfs and extracts the archive.
+
+Diagnostics:
+
+- Runtime stages are logged to `run/container.log`; the log is truncated to the newest half once it exceeds `LOG_MAX_KB` KiB (default `256`).
 
 ## Notes
 
