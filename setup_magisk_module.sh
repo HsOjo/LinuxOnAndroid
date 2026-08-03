@@ -27,6 +27,7 @@ case "${1:-install}" in
     ;;
 esac
 mkdir -p "$MODDIR" || exit 1
+rm -f "$MODDIR/remove" "$MODDIR/disable" 2>/dev/null || true
 rm -f /data/adb/service.d/99-linuxonandroid.sh 2>/dev/null || true
 {
   echo "id=$MODID"
