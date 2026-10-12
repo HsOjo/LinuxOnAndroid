@@ -20,6 +20,19 @@ if [ -e /dev/pts/ptmx ]; then
 else
   mknod -m 666 /dev/ptmx c 5 2 2>/dev/null || true
 fi
+# Standard fd links every userland expects (FHS): shells, daemons, and
+# container images (e.g. nginx:alpine symlinks /var/log/nginx/*.log to
+# /dev/std*) all assume these exist. Native init systems create them
+# (OpenRC devfs seed_dev, systemd mount-setup), but this chroot's PID 1 is
+# container-init, so we must create them ourselves — otherwise programs
+# opening /dev/std* with O_CREAT silently make a regular file here (or die
+# with EROFS when this /dev is bind-mounted read-only into containers).
+# -n: once /dev/fd exists it resolves to a directory; plain ln -sf would
+# dereference it and try to create /dev/fd/fd.
+ln -sfn /proc/self/fd   /dev/fd     2>/dev/null || true
+ln -sfn /proc/self/fd/0 /dev/stdin  2>/dev/null || true
+ln -sfn /proc/self/fd/1 /dev/stdout 2>/dev/null || true
+ln -sfn /proc/self/fd/2 /dev/stderr 2>/dev/null || true
 bind_node() {
   src="$DEVSRC${1#/dev}"
   dst="$1"
