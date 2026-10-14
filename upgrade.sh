@@ -1,5 +1,6 @@
 #!/bin/sh
-# Upgrade the deployment at /data/adb/LinuxOnAndroid from this repo.
+# Deploy or upgrade /data/adb/LinuxOnAndroid from this repo (first install included,
+# the directory is created if missing).
 # Run on the host (macOS/Linux) with adb connected and root (su) available.
 # Only syncs repo files; runtime data (rootfs.img, rootfs/, run/, bin/, backup/)
 # on the device is left untouched.
@@ -25,7 +26,7 @@ if [ "${ADB:-adb}" = "adb" ]; then
 fi
 
 "$ADB" get-state >/dev/null 2>&1 || die "no adb device"
-"$ADB" shell "su -c 'test -d $DST'" >/dev/null 2>&1 || die "$DST not found (or no root)"
+"$ADB" shell "su -c 'mkdir -p $DST'" >/dev/null 2>&1 || die "$DST not writable (or no root)"
 
 FILES="
 LICENSE
