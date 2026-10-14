@@ -10,7 +10,7 @@ SD=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 DST=${DST:-/data/adb/LinuxOnAndroid}
 ADB=${ADB:-adb}
 
-die() { printf '%s\n' "upgrade: $*" >&2; exit 1; }
+die() { printf '%s\n' "deploy: $*" >&2; exit 1; }
 
 adbcmd=${ADB:-adb}
 command -v "${adbcmd%% *}" >/dev/null 2>&1 || die "adb not found, install Android platform-tools first"
@@ -19,7 +19,7 @@ if [ "${ADB:-adb}" = "adb" ]; then
   devs=$(adb devices | awk 'NR>1 && $2=="device" {print $1}')
   n=$(printf '%s\n' "$devs" | sed '/^$/d' | wc -l | tr -d ' ')
   if [ "$n" -gt 1 ]; then
-    printf '%s\n' "upgrade: multiple devices, pick one with ADB=\"adb -s <serial>\":" >&2
+    printf '%s\n' "deploy: multiple devices, pick one with ADB=\"adb -s <serial>\":" >&2
     printf '  %s\n' $devs >&2
     exit 1
   fi
@@ -59,12 +59,12 @@ for f in $FILES; do
   if [ "$lsum" = "$rsum" ]; then
     printf 'same:    %s\n' "$f"
   else
-    "$ADB" push "$SD/$f" "/data/local/tmp/loa-upgrade.tmp" >/dev/null
+    "$ADB" push "$SD/$f" "/data/local/tmp/loa-deploy.tmp" >/dev/null
     case $f in
       */*) dir=$DST/${f%/*};;
       *) dir=$DST;;
     esac
-    "$ADB" shell "su -c 'mkdir -p $dir; cp /data/local/tmp/loa-upgrade.tmp $DST/$f; chmod 755 $DST/$f; rm -f /data/local/tmp/loa-upgrade.tmp'" >/dev/null
+    "$ADB" shell "su -c 'mkdir -p $dir; cp /data/local/tmp/loa-deploy.tmp $DST/$f; chmod 755 $DST/$f; rm -f /data/local/tmp/loa-deploy.tmp'" >/dev/null
     printf 'updated: %s\n' "$f"
     changed=1
   fi
@@ -73,5 +73,5 @@ done
 # Clean macOS junk left by earlier copies.
 "$ADB" shell "su -c 'find $DST -name \".DS_Store\" -o -name \"._*\" | while read -r j; do rm -f \"\$j\"; done'" >/dev/null
 
-[ "$changed" = 1 ] || printf '%s\n' 'upgrade: already up to date'
-printf '%s\n' 'upgrade: done'
+[ "$changed" = 1 ] || printf '%s\n' 'deploy: already up to date'
+printf '%s\n' 'deploy: done'
