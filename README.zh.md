@@ -14,7 +14,7 @@
 
 ## 要求
 
-- 已 root 的 Android（Magisk），以及一个由用户自己选择的可写目录（例如 `/data` 下任意位置）；脚本会从自身路径推导 `CTDIR`，不固定存放位置。
+- 已 root 的 Android（Magisk），以及一个可写目录；脚本会从自身路径推导 `CTDIR`，不固定存放位置。但注意：设了锁屏密码的设备开机时 `/data` 处于 FBE 加密状态，首次解锁前不可读，而 Magisk 开机自启（`service.sh`）在解锁之前就会运行——因此 `CTDIR` 必须放在不加密的 Direct Boot 区域，即 `/data/adb` 下（如 `/data/adb/LinuxOnAndroid`），不能放在 `/data` 下的其他任意位置。
 - 内核支持 mount namespace、UTS namespace、`TMPFS`；默认 loop rootfs 还需要 `BLK_DEV_LOOP` 和 `EXT4_FS`。`TUN`/`FUSE` 可选。
 - SELinux 策略允许 root shell 执行 `unshare`、bind mount、`losetup`、`pivot_root`。
 - rootfs 需匹配手机架构，并提供 `/bin/sh` 与基础工具（`mount`、`umount`、`mknod`、`ln`、`env`）。Alpine 和 Debian 由 `lib/guest-init-*` 处理。

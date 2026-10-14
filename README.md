@@ -14,7 +14,7 @@ Run a Linux rootfs on a rooted Android device with the host kernel. It uses a pr
 
 ## Requirements
 
-- Rooted Android with Magisk and a writable directory chosen by the user (for example under `/data`); the scripts derive `CTDIR` from their own path.
+- Rooted Android with Magisk and a writable directory for the scripts, which derive `CTDIR` from their own path. On devices with a lockscreen password `/data` is FBE-encrypted until the first unlock, while Magisk autostart (`service.sh`) runs before it — so `CTDIR` must live in device-encrypted storage, i.e. under `/data/adb` (e.g. `/data/adb/LinuxOnAndroid`), not anywhere else under `/data`.
 - Kernel with mount and UTS namespaces, `TMPFS`; for the default loop rootfs also `BLK_DEV_LOOP` and `EXT4_FS`. `TUN`/`FUSE` are optional.
 - SELinux policy that allows the root shell to `unshare`, bind-mount, `losetup`, and `pivot_root`.
 - A rootfs matching the phone architecture with `/bin/sh` and basic tools (`mount`, `umount`, `mknod`, `ln`, `env`). Alpine and Debian are handled by `lib/guest-init-*`.
