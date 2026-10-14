@@ -19,6 +19,27 @@
 - SELinux 策略允许 root shell 执行 `unshare`、bind mount、`losetup`、`pivot_root`。
 - rootfs 需匹配手机架构，并提供 `/bin/sh` 与基础工具（`mount`、`umount`、`mknod`、`ln`、`env`）。Alpine 和 Debian 由 `lib/guest-init-*` 处理。
 
+## 部署
+
+以下命令都在电脑上执行，需 adb 已连接设备且设备有 Magisk `su`。
+
+首次安装：
+
+```sh
+adb connect <设备>:5555                      # USB adb 也可以
+./deploy.sh                                  # 把脚本推送到 /data/adb/LinuxOnAndroid
+adb shell "su -c 'cd /data/adb/LinuxOnAndroid && ROOTFS_URL=... ./init.sh'"
+adb shell "su -c '/data/adb/LinuxOnAndroid/setup_magisk_module.sh'"
+```
+
+仓库改动后的更新：
+
+```sh
+./deploy.sh    # 逐文件 md5 对比，只推送有变化的
+```
+
+`deploy.sh` 是唯一部署入口：首次运行会自动创建目标目录，且永不触碰运行时数据（`rootfs.img`、`rootfs/`、`run/`、`bin/`、`backup/`）。`lib/` 下的文件在容器启动时 bind 注入，对它们的改动在下一次 `stop.sh && start.sh`（或重启）后生效。
+
 ## 使用
 
 ```sh

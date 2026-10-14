@@ -19,6 +19,27 @@ Run a Linux rootfs on a rooted Android device with the host kernel. It uses a pr
 - SELinux policy that allows the root shell to `unshare`, bind-mount, `losetup`, and `pivot_root`.
 - A rootfs matching the phone architecture with `/bin/sh` and basic tools (`mount`, `umount`, `mknod`, `ln`, `env`). Alpine and Debian are handled by `lib/guest-init-*`.
 
+## Deployment
+
+Everything below runs on the host with `adb` connected and Magisk `su` available on the device.
+
+First install:
+
+```sh
+adb connect <device>:5555                    # USB adb works too
+./deploy.sh                                  # pushes the scripts to /data/adb/LinuxOnAndroid
+adb shell "su -c 'cd /data/adb/LinuxOnAndroid && ROOTFS_URL=... ./init.sh'"
+adb shell "su -c '/data/adb/LinuxOnAndroid/setup_magisk_module.sh'"
+```
+
+Updates after changing the repo:
+
+```sh
+./deploy.sh    # md5-compares every file, pushes only what changed
+```
+
+`deploy.sh` is the single deploy path: it creates the destination on first run and never touches runtime data (`rootfs.img`, `rootfs/`, `run/`, `bin/`, `backup/`). Files under `lib/` are bind-injected at container boot, so changes to them take effect on the next `stop.sh && start.sh` (or reboot).
+
 ## Usage
 
 ```sh
